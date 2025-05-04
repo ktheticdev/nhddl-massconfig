@@ -273,6 +273,10 @@ int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device) {
 
   // Get total number of valid cache entries
   int total = 0;
+
+  //Attempt to enforce storing config and cache on MASS device
+  char mass_mountpoint[] = "mass:";
+  
   Target *curTitle = list->first;
   while (curTitle != NULL) {
     if (strlen(curTitle->id) == 11) {
@@ -286,7 +290,7 @@ int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device) {
   }
 
   // Make sure path exists
-  if (device->mode == MODE_NONE || device->mountpoint == NULL)
+  if (device->mode == MODE_NONE || mass_mountpoint == NULL)
     return -ENODEV;
 
   // Prepare paths and header
@@ -295,8 +299,8 @@ int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device) {
   CacheEntryHeader header;
   CacheMetadata meta = {.magic = CACHE_MAGIC, .version = CACHE_VERSION, .total = total};
 
-  buildConfigFilePath(dirPath, device->mountpoint, NULL);
-  buildConfigFilePath(cachePath, device->mountpoint, titleIDCacheFile);
+  buildConfigFilePath(dirPath, mass_mountpoint, NULL);
+  buildConfigFilePath(cachePath, mass_mountpoint, titleIDCacheFile);
 
   // Get path to config directory and make sure it exists
   struct stat st;
@@ -371,8 +375,10 @@ int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device) {
 
 // Loads title ID cache from storage into cache
 int loadTitleIDCache(TitleIDCache *cache, struct DeviceMapEntry *device) {
+  // Attempt to enforce storing config on MASS
+  char mass_mountpoint[] = "mass:";
   // Make sure path exists
-  if (device->mode == MODE_NONE || device->mountpoint == NULL)
+  if (device->mode == MODE_NONE || mass_mountpoint == NULL)
     return -ENODEV;
 
   cache->total = 0;
@@ -383,7 +389,7 @@ int loadTitleIDCache(TitleIDCache *cache, struct DeviceMapEntry *device) {
 
   FILE *file;
   // Load the first found cache file
-  buildConfigFilePath(cachePath, device->mountpoint, titleIDCacheFile);
+  buildConfigFilePath(cachePath, mass_mountpoint, titleIDCacheFile);
 
   file = fopen(cachePath, "rb");
   if (file == NULL)
